@@ -21,4 +21,13 @@ export default {
 
   font-family: 'Montserrat', sans-serif;
 }
+
+a {
+  color: transparent;
+  text-decoration: none;
+}
+
+.blue {
+  color: #6C67FD;
+}
 </style>
