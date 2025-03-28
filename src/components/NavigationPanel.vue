@@ -27,8 +27,8 @@
     <li class="line" />
     <li
       class="navigation__item"
-      :class="{ active: activeNav === 'Аккаут' }"
-      @click="setActive('Аккаут')"
+      :class="{ active: activeNav === 'Аккаунт' }"
+      @click="setActive('Аккаунт')"
     >
       <img src="@/assets/account.svg" class="navigation__icon" alt="" />
       <p class="navigation__text">Аккаут</p>
@@ -48,14 +48,12 @@
 export default {
   data() {
     return {
-      // По умолчанию активна кнопка "Главная"
       activeNav: 'Главная'
     }
   },
   methods: {
     setActive(item) {
       this.activeNav = item
-      // Переход на соответствующую страницу через роутер
       switch (item) {
         case 'Главная':
           this.$router.push({ name: 'MainPage' })
@@ -70,7 +68,6 @@ export default {
           this.$router.push({ name: 'AccountPage' })
           break
         case 'Выйти':
-          // Здесь можно добавить логику выхода из системы
           break
       }
     }
