@@ -54,7 +54,25 @@ export default {
   },
   methods: {
     setActive(item) {
-      this.activeNav = item;
+      this.activeNav = item
+      // Переход на соответствующую страницу через роутер
+      switch (item) {
+        case 'Главная':
+          this.$router.push({ name: 'MainPage' })
+          break
+        case 'Документы':
+          this.$router.push({ name: 'DocumentPage' })
+          break
+        case 'Аналитика':
+          this.$router.push({ name: 'AnalysisPage' })
+          break
+        case 'Аккаут':
+          this.$router.push({ name: 'AccountPage' })
+          break
+        case 'Выйти':
+          // Здесь можно добавить логику выхода из системы
+          break
+      }
     }
   }
 }

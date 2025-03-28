@@ -1,6 +1,7 @@
 <template>
     <div class="layout">
       <NavigationPanel/>
+      <router-view />
     </div>
   </template>
   
@@ -20,6 +21,8 @@
     display: flex;
     width: 1200px;
     padding-top: 50px;
+    display: flex;
+    gap: 50px;
   }
   </style>
   
