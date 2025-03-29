@@ -110,7 +110,6 @@ export default {
   font-size: 14px;
 }
 
-/* Эффект при наведении */
 .navigation__item:hover {
   background-color: #6C67FD;
 }
@@ -123,7 +122,6 @@ export default {
   filter: contrast(50);
 }
 
-/* Активное состояние */
 .navigation__item.active {
   background-color: #6C67FD;
 }
