@@ -33,7 +33,7 @@
         <template v-if="!processing">
           <p>Запустить проверку и анализ</p>
           <div class="upload__price">
-            <p>({{ totalCost }} <img class="price" src="@/assets/balance.svg" alt=""/></p>
+            <p>({{ totalCost }} <img class="price" src="@/assets/balance.svg" alt=""/>)</p>
           </div>
         </template>
         <template v-else>
@@ -118,9 +118,12 @@ export default {
 <style scoped>
 .upload-documents {
   max-width: 450px;
+  overflow: hidden;
   margin: 0 auto;
   font-family: sans-serif;
+  background-color: #FFF;
 }
+
 .upload-documents__description {
   font-size: 13px;
   line-height: 150%;

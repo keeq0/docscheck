@@ -236,7 +236,7 @@ export default {
   border: none;
   margin-top: 10px;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: bold;
 }
 .ai-assistant {

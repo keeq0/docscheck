@@ -11,7 +11,6 @@
         :visible="assistantVisible" 
         @processing-complete="handleProcessingComplete" />
       <transition name="fade">
-        <!-- Передаем как URL, так и имя файла -->
         <AnalysisResult 
           v-if="showAnalysis" 
           :documentUrl="uploadedDocumentUrl"
@@ -59,7 +58,6 @@ export default {
       this.processing = false;
     },
     handleDocumentUploaded(file) {
-      // Сохраняем URL и имя файла
       this.uploadedDocumentUrl = URL.createObjectURL(file);
       this.uploadedDocumentName = file.name;
     }
