@@ -77,16 +77,16 @@ export default {
 
 <style scoped>
 .navigation {
-  width: 150px;
+  width: 130px;
   height: 500px;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
 
 .navigation__item {
-  width: 150px;
+  width: 130px;
   height: 40px;
   border-radius: 10px;
   background: #fff;
@@ -107,7 +107,7 @@ export default {
 .navigation__text {
   color: #a2a2a2;
   transition: 0.2s;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .navigation__item:hover {
