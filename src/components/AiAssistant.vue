@@ -8,8 +8,13 @@
       <button class="assistant__close" @click="hideAssistant">Скрыть</button>
     </div>
   
-    <div class="assistant__messages">
-
+   
+    <div
+      class="assistant__messages"
+      ref="messagesContainer"
+      @scroll="handleScroll"
+    >
+    
       <div class="assistant__first-message">
         <template v-if="showFirstLoading">
           <div class="loading-dots">•••</div>
@@ -22,6 +27,7 @@
         </template>
       </div>
       
+
       <div class="assistant__second-message" v-if="firstMessageComplete">
         <template v-if="showSecondLoading">
           <div class="loading-dots">•••</div>
@@ -35,6 +41,15 @@
             </div>
           </div>
         </template>
+      </div>
+
+      
+      <div 
+        v-if="showScrollToBottom"
+        class="scroll-to-bottom"
+        @click="scrollToBottom"
+      >
+        <img src="@/assets/arrow_down.png" class="scroll-to-bottom__icon" alt="">
       </div>
     </div>
 
@@ -54,7 +69,7 @@
     </footer>
   </div>
 </template>
-  
+
 <script>
 export default {
   name: 'AiAssistant',
@@ -102,8 +117,9 @@ export default {
       secondTypingIndex: 0,
       secondTypingInterval: null,
       headerTypingSpeed: 50,
-      bodyTypingSpeed: 12,
-      allMessagesComplete: false
+      bodyTypingSpeed: 8,
+      allMessagesComplete: false,
+      showScrollToBottom: false
     }
   },
   watch: {
@@ -112,15 +128,30 @@ export default {
     }
   },
   mounted() {
+   
     setTimeout(() => {
       this.showFirstLoading = false;
       this.startFirstTyping();
     }, 2000);
+    
+    this.$nextTick(() => {
+      this.handleScroll();
+    });
+  },
+  updated() {
+    
+    this.$nextTick(() => {
+      if (this.$refs.messagesContainer) {
+        this.handleScroll();
+      }
+    });
   },
   methods: {
     hideAssistant() {
       this.internalVisible = false;
     },
+
+    
     startFirstTyping() {
       const text = this.fullFirstMessage;
       this.typedFirstMessage = "";
@@ -137,6 +168,8 @@ export default {
         }
       }, 12);
     },
+
+   
     startSecondSequence() {
       this.showSecondLoading = true;
       setTimeout(() => {
@@ -144,6 +177,8 @@ export default {
         this.startSecondTypingHeader();
       }, 5000);
     },
+
+    
     startSecondTypingHeader() {
       this.typedSecondHeader = "";
       this.secondTypingIndex = 0;
@@ -157,6 +192,8 @@ export default {
         }
       }, this.headerTypingSpeed);
     },
+
+  
     startSecondTypingBody() {
       this.typedSecondBody = "";
       this.secondTypingIndex = 0;
@@ -170,17 +207,35 @@ export default {
           this.$emit('processing-complete');
         }
       }, this.bodyTypingSpeed);
+    },
+
+   
+    handleScroll() {
+      const container = this.$refs.messagesContainer;
+      const scrollHeight = container.scrollHeight;
+      const scrollTop = container.scrollTop;
+      const clientHeight = container.clientHeight;
+    
+      const nearBottom = scrollHeight - (scrollTop + clientHeight) <= 20;
+      this.showScrollToBottom = !nearBottom;
+    },
+    scrollToBottom() {
+      const container = this.$refs.messagesContainer;
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }
 }
 </script>
-  
+
 <style scoped>
 .assistant {
   position: fixed;
   top: 0;
   right: 0;
-  width: 600px;
+  width: 596px;
   height: 100vh;
   background: #333;
   color: #fff;
@@ -235,9 +290,10 @@ export default {
   100% { opacity: 0.2; }
 }
 .assistant__messages {
-  height: calc(100vh - 300px);
+  height: calc(100vh - 250px);
   overflow-y: auto;
   padding-right: 10px;
+  position: relative;
 }
 .assistant__messages::-webkit-scrollbar {
   width: 8px;
@@ -253,13 +309,13 @@ export default {
 .message {
   display: flex;
   gap: 15px;
-  padding-bottom: 30px;
+  padding-bottom: 25px;
   align-items: flex-start;
 }
 .message__text {
   margin: 0;
   line-height: 1.4;
-  font-size: 16px;
+  font-size: 14px;
   opacity: 0;
   animation: fadeIn 0.25s forwards;
 }
@@ -283,22 +339,21 @@ export default {
   transition: opacity 0.25s ease-in-out;
 }
 .assistant__footer {
-  padding-top: 20px;
+  padding-top: 10px;
 }
 .footer__buttons {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  padding-bottom: 20px;
-  height: 70px;
+  height: 60px;
 }
 .footer__button {
-  height: 100%;
+  height: 50px;
   width: fit-content;
   border-radius: 10px;
   outline: none;
   border: none;
-  padding: 0 30px;
+  padding: 0 40px;
   cursor: pointer;
   transition: opacity 0.5s ease;
   opacity: 0;
@@ -311,7 +366,7 @@ export default {
   background-color: #6C67FD;
   border: 1px solid #6C67FD;
   transition: 0.2s;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
 }
 .full {
@@ -319,7 +374,7 @@ export default {
   background-color: #FFF;
   border: 1px solid #FFF;
   transition: 0.2s;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
 }
 .report:hover {
@@ -340,5 +395,26 @@ export default {
   font-size: 12px;
   color: #a2a2a2;
   width: 450px;
+}
+
+.scroll-to-bottom {
+  position: sticky;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 25px;
+  height: 25px;
+  background: #fff;
+  color: #333;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border: 1px solid #E6E6E6;
+}
+.scroll-to-bottom__icon {
+  height: 15px;
 }
 </style>
