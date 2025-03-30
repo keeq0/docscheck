@@ -2,12 +2,11 @@
   <div class="analysis">
     <div class="analysis__header">
       <h2>Анализ документов</h2>
-      <!-- Используем computed-свойство truncatedDocumentName -->
       <p class="header__file">{{ truncatedDocumentName }} ({{ totalPages }} стр.)</p>
     </div>
     <div class="analysis__content">
       <div class="content__document" ref="documentContainer">
-        <!-- PDF-страницы будут динамически добавляться сюда -->
+        <!-- PDF-страницы  -->
       </div>
       <div class="content__panel">
         <ul class="panel__levels">
@@ -97,7 +96,6 @@ export default {
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         canvas.classList.add('pdf-page');
-        // Set fade in animation on the canvas:
         canvas.style.animation = "fadeInEffect 0.5s ease";
         
         const context = canvas.getContext('2d');
@@ -126,7 +124,6 @@ export default {
     },
     drawHeatmap(viewport, ctx) {
       ctx.clearRect(0, 0, viewport.width, viewport.height);
-      // Test heatmap: three semi-transparent rectangles
       ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
       ctx.fillRect(50, 50, 100, 40);
       ctx.fillStyle = "rgba(255, 255, 0, 0.3)";
@@ -147,7 +144,6 @@ export default {
   },
   async mounted() {
     if (this.documentUrl) {
-      // Dynamically import PDF.js from public (using webpackIgnore)
       this.pdfjsLib = await import(/* webpackIgnore: true */ '/pdfjs/legacy/build/pdf.mjs');
       this.pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/legacy/build/pdf.worker.mjs';
       this.renderPDF();

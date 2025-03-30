@@ -344,7 +344,7 @@ export default {
   padding-top: 10px;
 }
 .footer__buttons {
-  width: 450px;
+  width: 535px;
   display: flex;
   justify-content: space-between;
   gap: 10px;

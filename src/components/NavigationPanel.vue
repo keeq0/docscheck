@@ -64,7 +64,7 @@ export default {
         case 'Аналитика':
           this.$router.push({ name: 'AnalysisPage' })
           break
-        case 'Аккаут':
+        case 'Аккаунт':
           this.$router.push({ name: 'AccountPage' })
           break
         case 'Выйти':
