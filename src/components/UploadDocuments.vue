@@ -1,12 +1,10 @@
 <template>
   <div class="upload-documents">
-    
     <p class="upload-documents__description">
       Убедитесь, что ваши документы находятся в поддерживаемых форматах (<strong class="upload-documents__format">PDF</strong>, <strong class="upload-documents__format">DOC</strong>, <strong class="upload-documents__format">DOCX</strong>). 
       Перетащите выбранные файлы в область ниже или кликните на неё, чтобы открыть стандартное окно выбора. 
       Вы можете загрузить один или несколько файлов.
     </p>
-    
     <div class="upload-documents__dropmenu">
       <button class="upload-documents__button">
         Мои документы
@@ -16,7 +14,6 @@
         Каждый загруженный файл считается отдельной проверкой!
       </p>
     </div>
-  
     <h3 class="upload-documents__title">Загруженные документы:</h3>
     <div v-if="files.length === 0" class="upload-documents__empty">
       Загрузите файлы в поле выше для просмотра
@@ -36,7 +33,7 @@
         <template v-if="!processing">
           <p>Запустить проверку и анализ</p>
           <div class="upload__price">
-            <p>({{ totalCost }} <img class="price" src="@/assets/balance.svg" alt=""/>)</p>
+            <p>({{ totalCost }} <img class="price" src="@/assets/balance.svg" alt=""/></p>
           </div>
         </template>
         <template v-else>
@@ -105,11 +102,14 @@ export default {
       this.files.splice(index, 1)
     },
     truncateFileName(name) {
-      return name.length > 35 ? name.slice(0, 35) + '..' : name
+      return name.length > 30 ? name.slice(0, 30) + '..' : name
     },
     startProcessing() {
       if (!this.agreed || this.processing) return;
       this.$emit('processing-started');
+      if (this.files.length > 0) {
+        this.$emit('document-uploaded', this.files[0]);
+      }
     }
   }
 }
@@ -243,7 +243,6 @@ export default {
 .price {
   filter: contrast(50);
 }
-
 .upload__gear {
   width: 24px;
   height: 24px;

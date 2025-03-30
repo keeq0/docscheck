@@ -149,6 +149,7 @@ export default {
   methods: {
     hideAssistant() {
       this.internalVisible = false;
+      this.$emit('close');
     },
 
     
@@ -244,6 +245,7 @@ export default {
   transform: translateX(100%);
   transition: transform 0.2s ease-out;
   will-change: transform;
+  z-index: 1000;
 }
 .assistant--visible {
   transform: translateX(0);
