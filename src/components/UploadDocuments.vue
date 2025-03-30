@@ -29,12 +29,17 @@
           <img src="@/assets/trash.svg" alt="Удалить" class="upload-documents__file-delete" @click="removeFile(index)" />
         </div>
       </li>
-      <button class="upload__start" :disabled="!agreed || processing" @click="startProcessing">
-        <template v-if="!processing">
+      <button class="upload__start" 
+              :disabled="!agreed || processing || availableFiles === 0" 
+              @click="startProcessing">
+        <template v-if="!processing && availableFiles > 0">
           <p>Запустить проверку и анализ</p>
           <div class="upload__price">
-            <p>({{ totalCost }} <img class="price" src="@/assets/balance.svg" alt=""/>)</p>
+            <p>({{ availableFiles }} <img class="price" src="@/assets/balance.svg" alt=""/>)</p>
           </div>
+        </template>
+        <template v-else-if="!processing && availableFiles === 0">
+          <p>Добавьте файлы для продолжения</p>
         </template>
         <template v-else>
           <img class="upload__gear" src="@/assets/gear.png" alt="Processing" />
@@ -64,51 +69,62 @@ export default {
   data() {
     return {
       files: [],
-      agreed: false
+      agreed: false,
+      processedCount: 0
     }
   },
   computed: {
     totalCost() {
-      return this.files.length
+      return this.files.length;
+    },
+    availableFiles() {
+      // Количество оставшихся файлов для обработки
+      return this.files.length - this.processedCount;
     }
   },
   methods: {
     onFilesAdded(newFiles) {
-      const allowedExtensions = ['pdf', 'doc', 'docx']
+      const allowedExtensions = ['pdf', 'doc', 'docx'];
       const filteredFiles = newFiles.filter(file => {
-        const ext = file.name.split('.').pop().toLowerCase()
-        return allowedExtensions.includes(ext)
-      })
-      this.files.push(...filteredFiles)
+        const ext = file.name.split('.').pop().toLowerCase();
+        return allowedExtensions.includes(ext);
+      });
+      this.files.push(...filteredFiles);
     },
     getFileIcon(file) {
-      const ext = file.name.split('.').pop().toLowerCase()
+      const ext = file.name.split('.').pop().toLowerCase();
       if (ext === 'pdf') {
-        return require('@/assets/pdf.png')
+        return require('@/assets/pdf.png');
       } else if (ext === 'doc' || ext === 'docx') {
-        return require('@/assets/doc.png')
+        return require('@/assets/doc.png');
       }
     },
     formatFileSize(size) {
       if (size < 1024) {
-        return size + ' B'
+        return size + ' B';
       } else if (size < 1024 * 1024) {
-        return (size / 1024).toFixed(1) + ' KB'
+        return (size / 1024).toFixed(1) + ' KB';
       } else {
-        return (size / (1024 * 1024)).toFixed(1) + ' MB'
+        return (size / (1024 * 1024)).toFixed(1) + ' MB';
       }
     },
     removeFile(index) {
-      this.files.splice(index, 1)
+      this.files.splice(index, 1);
+      if (this.processedCount > this.files.length) {
+        this.processedCount = this.files.length;
+      }
     },
     truncateFileName(name) {
-      return name.length > 30 ? name.slice(0, 30) + '..' : name
+      return name.length > 30 ? name.slice(0, 30) + '..' : name;
     },
     startProcessing() {
-      if (!this.agreed || this.processing) return;
+      if (!this.agreed || this.processing || this.availableFiles === 0) return;
       this.$emit('processing-started');
-      if (this.files.length > 0) {
-        this.$emit('document-uploaded', this.files[0]);
+      if (this.files.length > 0 && this.availableFiles > 0) {
+        // Передаем первый не обработанный файл (индекс processedCount)
+        this.$emit('document-uploaded', this.files[this.processedCount]);
+        // Увеличиваем счетчик обработанных файлов
+        this.processedCount++;
       }
     }
   }
