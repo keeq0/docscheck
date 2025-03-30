@@ -2,11 +2,12 @@
   <div class="analysis">
     <div class="analysis__header">
       <h2>Анализ документов</h2>
-      <p class="header__file">{{ documentName }} ({{ totalPages }} стр.)</p>
+      <!-- Используем computed-свойство truncatedDocumentName -->
+      <p class="header__file">{{ truncatedDocumentName }} ({{ totalPages }} стр.)</p>
     </div>
     <div class="analysis__content">
       <div class="content__document" ref="documentContainer">
-
+        <!-- PDF-страницы будут динамически добавляться сюда -->
       </div>
       <div class="content__panel">
         <ul class="panel__levels">
@@ -47,9 +48,9 @@ export default {
       type: String,
       default: ''
     },
-
     documentName: {
       type: String,
+      default: 'Документ'
     }
   },
   data() {
@@ -62,13 +63,20 @@ export default {
       maxZoom: 3
     };
   },
+  computed: {
+    truncatedDocumentName() {
+      if (this.documentName && this.documentName.length > 15) {
+        return this.documentName.slice(0, 15) + '..';
+      }
+      return this.documentName;
+    }
+  },
   methods: {
     async renderPDF() {
       if (!this.documentUrl || !this.pdfjsLib) return;
-      
       const container = this.$refs.documentContainer;
       const containerWidth = container.clientWidth;
-      container.innerHTML = ''; 
+      container.innerHTML = '';
       
       const loadingTask = this.pdfjsLib.getDocument(this.documentUrl);
       const pdf = await loadingTask.promise;
@@ -89,6 +97,8 @@ export default {
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         canvas.classList.add('pdf-page');
+        // Set fade in animation on the canvas:
+        canvas.style.animation = "fadeInEffect 0.5s ease";
         
         const context = canvas.getContext('2d');
         const renderContext = {
@@ -116,6 +126,7 @@ export default {
     },
     drawHeatmap(viewport, ctx) {
       ctx.clearRect(0, 0, viewport.width, viewport.height);
+      // Test heatmap: three semi-transparent rectangles
       ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
       ctx.fillRect(50, 50, 100, 40);
       ctx.fillStyle = "rgba(255, 255, 0, 0.3)";
@@ -136,9 +147,8 @@ export default {
   },
   async mounted() {
     if (this.documentUrl) {
-    
+      // Dynamically import PDF.js from public (using webpackIgnore)
       this.pdfjsLib = await import(/* webpackIgnore: true */ '/pdfjs/legacy/build/pdf.mjs');
-     
       this.pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/legacy/build/pdf.worker.mjs';
       this.renderPDF();
     }
@@ -147,6 +157,11 @@ export default {
 </script>
 
 <style scoped>
+@keyframes fadeInEffect {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .analysis {
   width: 520px;
   height: 580px;
@@ -156,6 +171,7 @@ export default {
   padding: 15px;
   position: relative;
   z-index: 0;
+  animation: fadeInEffect 0.5s ease;
 }
 .analysis__header {
   display: flex;

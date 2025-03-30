@@ -236,7 +236,7 @@ export default {
   position: fixed;
   top: 0;
   right: 0;
-  width: 596px;
+  width: 46.5%;
   height: 100vh;
   background: #333;
   color: #fff;
@@ -344,6 +344,7 @@ export default {
   padding-top: 10px;
 }
 .footer__buttons {
+  width: 450px;
   display: flex;
   justify-content: space-between;
   gap: 10px;
