@@ -1,5 +1,6 @@
 <template>
   <div class="upload-documents">
+    
     <p class="upload-documents__description">
       Убедитесь, что ваши документы находятся в поддерживаемых форматах (<strong class="upload-documents__format">PDF</strong>, <strong class="upload-documents__format">DOC</strong>, <strong class="upload-documents__format">DOCX</strong>). 
       Перетащите выбранные файлы в область ниже или кликните на неё, чтобы открыть стандартное окно выбора. 
