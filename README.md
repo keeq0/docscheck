@@ -1,3 +1,3 @@
-# Fix ветка проекта DocsCheck
+# Dev ветка проекта DocsCheck
 Сервис проверки юридических документов DocsCheck
 
