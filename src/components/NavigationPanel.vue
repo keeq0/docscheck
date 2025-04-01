@@ -31,13 +31,9 @@
       @click="setActive('Аккаунт')"
     >
       <img src="@/assets/account.svg" class="navigation__icon" alt="" />
-      <p class="navigation__text">Аккаут</p>
+      <p class="navigation__text">Аккаунт</p>
     </li>
-    <li
-      class="navigation__item"
-      :class="{ active: activeNav === 'Выйти' }"
-      @click="setActive('Выйти')"
-    >
+    <li class="navigation__item">
       <img src="@/assets/exit.svg" class="navigation__icon" alt="" />
       <p class="navigation__text">Выйти</p>
     </li>
