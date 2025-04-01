@@ -168,9 +168,8 @@ export default {
 
 <style scoped>
 .upload-documents {
-  max-width: 450px;
+  width: 450px;
   overflow: hidden;
-  margin: 0 auto;
   font-family: sans-serif;
   background-color: #FFF;
 }

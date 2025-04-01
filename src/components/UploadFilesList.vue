@@ -71,7 +71,7 @@ export default {
   cursor: not-allowed;
   border: none;
   outline: none;
-  border-radius: 8Fpx;
+  border-radius: 8px;
   font-weight: 600;
   background: rgba(108,103,253, 0.2);
   color: #fff;
@@ -152,6 +152,7 @@ span:hover {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  padding-bottom: 30px;
 }
 
 .list__item {
