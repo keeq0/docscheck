@@ -5,15 +5,22 @@
       Перетащите выбранные файлы в область ниже или кликните на неё, чтобы открыть стандартное окно выбора. 
       Вы можете загрузить один или несколько файлов.
     </p>
+
     <div class="upload-documents__dropmenu">
-      <button class="upload-documents__button">
+      <button class="upload-documents__button" @click="toggleFileList">
         Мои документы
       </button>
+      
+      <div class="files-wrapper" ref="filesWrapper" v-show="showFileList">
+        <UploadFilesList />
+      </div>
+      
       <DropMenu @files-added="onFilesAdded" />
       <p class="upload-documents__warning">
         Каждый загруженный файл считается отдельной проверкой!
       </p>
     </div>
+
     <h3 class="upload-documents__title">Загруженные документы:</h3>
     <div v-if="files.length === 0" class="upload-documents__empty">
       Загрузите файлы в поле выше для просмотра
@@ -26,9 +33,15 @@
         </div>
         <div class="upload-documents__file-details">
           <span class="upload-documents__file-size">{{ formatFileSize(file.size) }}</span>
-          <img src="@/assets/trash.svg" alt="Удалить" class="upload-documents__file-delete" @click="removeFile(index)" />
+          <img 
+            src="@/assets/trash.svg" 
+            alt="Удалить" 
+            class="upload-documents__file-delete" 
+            @click="removeFile(index)" 
+          />
         </div>
       </li>
+
       <button class="upload__start" 
               :disabled="!agreed || processing || availableFiles === 0" 
               @click="startProcessing">
@@ -45,6 +58,7 @@
           <img class="upload__gear" src="@/assets/gear.png" alt="Processing" />
         </template>
       </button>
+
       <div class="agreement">
         <input type="checkbox" class="agreement__checkbox" v-model="agreed" />
         <p class="agreement__text">
@@ -57,9 +71,14 @@
 
 <script>
 import DropMenu from '@/components/DropMenu.vue'
+import UploadFilesList from '@/components/UploadFilesList.vue' 
+
 export default {
   name: 'UploadDocuments',
-  components: { DropMenu },
+  components: { 
+    DropMenu,
+    UploadFilesList 
+  },
   props: {
     processing: {
       type: Boolean,
@@ -70,19 +89,37 @@ export default {
     return {
       files: [],
       agreed: false,
-      processedCount: 0
+      processedCount: 0,
+      showFileList: false 
     }
   },
   computed: {
     totalCost() {
-      return this.files.length;
+      return this.files.length
     },
     availableFiles() {
-      // Количество оставшихся файлов для обработки
-      return this.files.length - this.processedCount;
+      return this.files.length - this.processedCount
     }
   },
   methods: {
+    toggleFileList() {
+      const wrapper = this.$refs.filesWrapper;
+      if (this.showFileList) {
+        wrapper.classList.remove('fade-in');
+        wrapper.classList.add('fade-out');
+        setTimeout(() => {
+          this.showFileList = false;
+        }, 100);
+      } else {
+       
+        this.showFileList = true;
+        this.$nextTick(() => {
+          const wrapper = this.$refs.filesWrapper;
+          wrapper.classList.remove('fade-out');
+          wrapper.classList.add('fade-in');
+        });
+      }
+    },
     onFilesAdded(newFiles) {
       const allowedExtensions = ['pdf', 'doc', 'docx'];
       const filteredFiles = newFiles.filter(file => {
@@ -121,9 +158,7 @@ export default {
       if (!this.agreed || this.processing || this.availableFiles === 0) return;
       this.$emit('processing-started');
       if (this.files.length > 0 && this.availableFiles > 0) {
-        // Передаем первый не обработанный файл (индекс processedCount)
         this.$emit('document-uploaded', this.files[this.processedCount]);
-        // Увеличиваем счетчик обработанных файлов
         this.processedCount++;
       }
     }
@@ -148,7 +183,6 @@ export default {
 .upload-documents__dropmenu {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
 }
 .upload-documents__button {
   width: 100px;
@@ -289,5 +323,16 @@ export default {
 .agreement__link:hover {
   text-decoration: underline;
   text-underline-position: under;
+}
+
+.files-wrapper {
+  transition: opacity 0.15s ease-in-out;
+  opacity: 1;
+}
+.fade-in {
+  opacity: 1;
+}
+.fade-out {
+  opacity: 0;
 }
 </style>
