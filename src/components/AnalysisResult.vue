@@ -24,12 +24,24 @@
           </li>
         </ul>
         <button class="panel__button ai-assistant" @click="toggleAssistant">
-          ИИ‑Помощник
+          <img src="@/assets/ai_white.svg" class="button__icon" alt=""/> 
+          <p class="">ИИ-помощник</p>
         </button>
-        <button class="panel__button note">Новая заметка</button>
-        <button class="panel__button save">Сохранить</button>
-        <button class="panel__button download">Скачать отчет</button>
-        <button class="panel__button download-all">Скачать готовый документ</button>
+        <button class="panel__button note" >
+          <img src="@/assets/note.svg" class="button__icon" alt=""/> 
+          <p class="">Новая заметка</p>
+        </button>
+        <button class="panel__button save" >
+          <img src="@/assets/save.svg" class="button__icon" alt=""/> 
+          <p class="">Сохранить</p>
+        </button>
+        <button class="panel__button download">
+          <img src="@/assets/save_report.svg" class="button__icon" alt=""/> 
+          <p class="">Скачать отчет</p>
+        </button>
+        <button class="panel__button download-all" >
+          <p class="">Скачать готовый документ</p>
+        </button>
       </div>
     </div>
     <AiAssistant :visible="assistantVisible" @close="assistantVisible = false" />
@@ -89,7 +101,6 @@ export default {
         
         const pageContainer = document.createElement('div');
         pageContainer.classList.add('pdf-page-container');
-        pageContainer.style.marginBottom = '10px';
         pageContainer.style.position = 'relative';
         
         const canvas = document.createElement('canvas');
@@ -241,8 +252,8 @@ export default {
   font-size: 11px;
 }
 .panel__button {
-  width: 110px;
-  height: 30px;
+  width: 120px;
+  height: 35px;
   border-radius: 10px;
   outline: none;
   border: none;
@@ -250,6 +261,10 @@ export default {
   cursor: pointer;
   font-size: 11px;
   font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
 .ai-assistant {
   background-color: #6C67FD;
@@ -257,10 +272,19 @@ export default {
   border: 1px solid #6C67FD;
   margin-bottom: 20px;
   transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
 .ai-assistant:hover {
   background-color: #fff;
   color: #6C67FD;
+}
+
+.button__icon {
+  width: 15px;
+  height: 15px;
 }
 .note, .save {
   background-color: #FFF;
