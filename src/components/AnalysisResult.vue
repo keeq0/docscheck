@@ -25,26 +25,32 @@
         </ul>
         <button class="panel__button ai-assistant" @click="toggleAssistant">
           <img src="@/assets/ai_white.svg" class="button__icon" alt=""/> 
-          <p class="">ИИ-помощник</p>
+          <p>ИИ-помощник</p>
         </button>
-        <button class="panel__button note" >
+        <button class="panel__button note">
           <img src="@/assets/note.svg" class="button__icon" alt=""/> 
-          <p class="">Новая заметка</p>
+          <p>Новая заметка</p>
         </button>
-        <button class="panel__button save" >
+        <button class="panel__button save">
           <img src="@/assets/save.svg" class="button__icon" alt=""/> 
-          <p class="">Сохранить</p>
+          <p>Сохранить</p>
         </button>
         <button class="panel__button download">
           <img src="@/assets/save_report.svg" class="button__icon" alt=""/> 
-          <p class="">Скачать отчет</p>
+          <p>Скачать отчет</p>
         </button>
-        <button class="panel__button download-all" >
-          <p class="">Скачать готовый документ</p>
+        <button class="panel__button download-all">
+          <p>Скачать готовый документ</p>
         </button>
       </div>
     </div>
-    <AiAssistant :visible="assistantVisible" @close="assistantVisible = false" />
+    <AiAssistant 
+      :visible="assistantVisible" 
+      @close="assistantVisible = false" 
+      :analysisResult="analysisResult"
+      :documentName="documentName"
+      :totalPages="totalPages"
+    />
   </div>
 </template>
 
@@ -76,10 +82,9 @@ export default {
   },
   computed: {
     truncatedDocumentName() {
-      if (this.documentName && this.documentName.length > 15) {
-        return this.documentName.slice(0, 15) + '..';
-      }
-      return this.documentName;
+      return this.documentName && this.documentName.length > 15
+        ? this.documentName.slice(0, 15) + '..'
+        : this.documentName;
     }
   },
   methods: {
@@ -144,12 +149,30 @@ export default {
     },
     toggleAssistant() {
       this.assistantVisible = !this.assistantVisible;
+    },
+   
+    async extractPdfText() {
+      if (!this.documentUrl || !this.pdfjsLib) return;
+      const loadingTask = this.pdfjsLib.getDocument(this.documentUrl);
+      const pdf = await loadingTask.promise;
+      let fullText = '';
+      
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        const page = await pdf.getPage(pageNumber);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(' ');
+        console.log(`Страница ${pageNumber}: ${pageText}`);
+        fullText += pageText + '\n';
+      }
+      console.log('Полное содержимое PDF:', fullText);
     }
   },
   watch: {
     documentUrl(newVal) {
       if (newVal && this.pdfjsLib) {
         this.renderPDF();
+        
+        this.extractPdfText();
       }
     }
   },
@@ -158,6 +181,8 @@ export default {
       this.pdfjsLib = await import(/* webpackIgnore: true */ '/pdfjs/legacy/build/pdf.mjs');
       this.pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/legacy/build/pdf.worker.mjs';
       this.renderPDF();
+      
+      this.extractPdfText();
     }
   }
 };
