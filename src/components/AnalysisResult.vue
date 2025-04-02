@@ -300,7 +300,7 @@ export default {
       ctx.fillRect(150, 200, 120, 50);
     },
     toggleAssistant() {
-      this.$emit('show-assistant'); // Используем emit вместо $parent
+      this.$emit('show-assistant'); 
     },
 
   },

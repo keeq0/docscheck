@@ -170,7 +170,7 @@ export default {
     waitForAnalysis() {
       this.waitingForAnalysis = true;
       this.showSecondLoading = true;
-      // Проверяем, если ответ уже пришел до завершения первой анимации
+
       if (this.analysisResult || this.analysisError) {
         this.startSecondSequence();
         this.waitingForAnalysis = false;
@@ -180,16 +180,16 @@ export default {
     formatAnalysisText(text) {
   if (!text) return '';
   
-  // Удаляем все markdown-символы
+ 
   let cleanText = text
-    .replace(/^#+\s*/gm, '') // Удаляем решетки в начале строк
-    .replace(/\*\*/g, '') // Удаляем ** для жирного текста
-    .replace(/\*/g, '') // Удаляем * для курсива
-    .replace(/^\d+\.\d+\.?\s*/gm, '') // Удаляем нумерацию типа 1.1.
-    .replace(/^-\s*/gm, '') // Удаляем маркеры списков
-    .replace(/\n{3,}/g, '\n\n'); // Удаляем лишние переносы строк
+    .replace(/^#+\s*/gm, '') 
+    .replace(/\*\*/g, '') 
+    .replace(/\*/g, '') 
+    .replace(/^\d+\.\d+\.?\s*/gm, '') 
+    .replace(/^-\s*/gm, '')
+    .replace(/\n{3,}/g, '\n\n'); 
 
-  // Разбиваем на строки и добавляем отступы
+
   const lines = cleanText.split('\n');
   let htmlOutput = '';
 
@@ -197,22 +197,22 @@ export default {
     line = line.trim();
     
     if (!line) {
-      // Добавляем отступ между абзацами
+   
       if (index > 0 && index < lines.length - 1 && lines[index - 1].trim() && lines[index + 1].trim()) {
         htmlOutput += '<div class="text-block"><br></div>';
       }
       return;
     }
 
-    // Определяем уровень заголовка по отступам
+  
     if (line.match(/^[A-ZА-ЯЁ][A-ZА-ЯЁa-zа-яё\s-]+$/)) {
-      // Заголовок верхнего уровня (только заглавные буквы и дефисы)
+      
       htmlOutput += `<h3 class="section-title">${line}</h3>`;
     } else if (line.match(/^\s{4}/)) {
-      // Подпункт с отступом
+   
       htmlOutput += `<p class="indented-text">${line.trim()}</p>`;
     } else {
-      // Обычный текст
+    
       htmlOutput += `<p class="regular-text">${line}</p>`;
     }
   });
