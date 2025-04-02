@@ -24,9 +24,9 @@
           </li>
         </ul>
         <button class="panel__button ai-assistant" @click="toggleAssistant">
-          <img src="@/assets/ai_white.svg" class="button__icon" alt=""/> 
-          <p>ИИ-помощник</p>
-        </button>
+        <img src="@/assets/ai_white.svg" class="button__icon" alt=""/> 
+        <p>ИИ-помощник</p>
+      </button>
         <button class="panel__button note">
           <img src="@/assets/note.svg" class="button__icon" alt=""/> 
           <p>Новая заметка</p>
@@ -44,22 +44,17 @@
         </button>
       </div>
     </div>
-    <AiAssistant 
-      :visible="assistantVisible" 
-      @close="assistantVisible = false" 
-      :analysisResult="analysisResult"
-      :documentName="documentName"
-      :totalPages="totalPages"
-    />
   </div>
 </template>
 
+
 <script>
-import AiAssistant from '@/components/AiAssistant.vue';
+
+import axios from 'axios';
 
 export default {
   name: 'AnalysisResult',
-  components: { AiAssistant },
+  components: {},
   props: {
     documentUrl: {
       type: String,
@@ -72,12 +67,13 @@ export default {
   },
   data() {
     return {
-      assistantVisible: false,
       totalPages: 0,
       pdfjsLib: null,
       zoom: 1.5,
       minZoom: 1,
-      maxZoom: 3
+      maxZoom: 3,
+      analysisResult: null,
+      analysisError: false,
     };
   },
   computed: {
@@ -88,6 +84,162 @@ export default {
     }
   },
   methods: {
+
+
+    async analyzeDocument(text) {
+      const prompt = `Ты - ведущий эксперт по аналитике документов с 15-летним опытом. Проведи всесторонний аудит предоставленного документа и сформируй исчерпывающий отчет в СТРОГОМ соответствии со структурой ниже. 
+
+# Полный профессиональный анализ документа
+
+## 1. Юридико-технический аудит
+### 1.1. Формальные параметры
+- Полное наименование документа: [указать с реквизитами]
+- Вид документа: [договор/акт/регламент и т.д.] 
+- Нормативная база: [перечень регулирующих документов]
+- Юрисдикция: [применимое право]
+
+### 1.2. Структурный анализ
+- Полнота обязательных разделов: [проверка по ГОСТ/отраслевым стандартам]
+- Логика построения: [оценка последовательности разделов]
+- Ссылочный аппарат: [корректность внутренних/внешних ссылок]
+
+## 2. Содержательная экспертиза
+### 2.1. Существенные условия
+- [Условие 1] - соответствие законодательству
+- [Условие 2] - коммерческая целесообразность
+- [Условие 3] - риски исполнения
+
+### 2.2. Правовые аспекты
+- Конфликт норм: [выявленные противоречия]
+- Пробелы регулирования: [отсутствующие положения]
+- Арбитражная практика: [анализ спорных моментов]
+
+### 2.3. Финансовые параметры
+- Расчетные формулы: [проверка корректности]
+- Валютные оговорки: [анализ рисков]
+- Санкционные механизмы: [эффективность]
+
+## 3. Риск-ориентированный анализ
+### 3.1. Критические уязвимости (красный уровень)
+- [Риск 1] - вероятность/последствия
+- [Риск 2] - финансовый/репутационный ущерб
+
+### 3.2. Потенциальные угрозы (желтый уровень)
+- [Угроза 1] - условия реализации
+- [Угроза 2] - превентивные меры
+
+### 3.3. Оптимизационные резервы (зеленый уровень)
+- [Резерв 1] - возможные улучшения
+- [Резерв 2] - best practices отрасли
+
+## 4. Детализированные рекомендации
+### 4.1. Обязательные исправления
+- [Пункт X] - требуемая правка (с обоснованием)
+- [Раздел Y] - необходимость дополнения
+
+### 4.2. Стратегические предложения
+- [Оптимизация 1] - долгосрочный эффект
+- [Оптимизация 2] - синергетический потенциал
+
+### 4.3. Альтернативные решения
+- [Вариант A] - сравнительные преимущества
+- [Вариант B] - ограничения реализации
+
+## 5. Итоговое заключение
+- Интегральная оценка: [по 10-балльной шкале]
+- Уровень готовности: [процентное соотношение]
+- Рекомендуемые действия: [приоритетный план]
+
+Требования к подаче:
+1. Глубина анализа - минимум 3 уровня вложенности
+2. Каждый тезис подтверждается конкретными выдержками
+3. Использование профессиональной лексики без жаргонизмов
+4. Четкое разделение фактов и экспертных оценок
+5. Обязательная привязка к отраслевым стандартам
+6. Визуальное выделение ключевых терминов CAPS
+7. Пустые строки между смысловыми блоками
+
+Пример формулировки:
+"Раздел 3.2.1 содержит НЕСООТВЕТСТВИЕ требованиям ФЗ-№152 (п.4 ст.5): 
+- Факт: отсутствует явное согласие на обработку ПДн 
+- Риск: штраф до 300К руб по ст.13.11 КоАП 
+- Решение: добавить отдельный пункт о получении письменного согласия"
+
+Дополнительные указания:
+- Анализировать документ через призму последних законодательных изменений
+- Учитывать отраслевую специфику и практику арбитражных судов
+- Предусматривать multi-case сценарии развития событий
+- Давать comparative analysis с аналогичными документами
+- Использовать принцип "red flag first"
+      Документ для анализа:
+      ${text.substring(0, 10000)}`;
+
+      try {
+        console.log('Отправка запроса к Deepseek API...');
+        const response = await axios.post(
+          'https://api.deepseek.com/chat/completions',
+          {
+            messages: [
+              {
+                content: "You are a professional document analyst",
+                role: "system"
+              },
+              {
+                content: prompt,
+                role: "user"
+              }
+            ],
+            model: "deepseek-chat",
+            max_tokens: 2048,
+            temperature: 0.7
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer sk-adf1807396484490882cd63ab534d01e'
+            }
+          }
+        );
+        
+        console.log('Ответ от Deepseek API:', response.data);
+
+        this.analysisResult = response.data.choices[0].message.content;
+        this.analysisError = false;
+      } catch (error) {
+        console.error('Ошибка при анализе документа:', error);
+        this.analysisResult = null;
+        this.analysisError = true;
+      }
+      
+      this.$emit('analysis-complete', {
+        result: this.analysisResult,
+        error: this.analysisError
+      });
+    },
+
+
+    async extractPdfText() {
+      if (!this.documentUrl || !this.pdfjsLib) return;
+      const loadingTask = this.pdfjsLib.getDocument(this.documentUrl);
+      const pdf = await loadingTask.promise;
+      let fullText = '';
+      
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        const page = await pdf.getPage(pageNumber);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+      
+      await this.analyzeDocument(fullText);
+    },
+
+
+
+
+
+
+
     async renderPDF() {
       if (!this.documentUrl || !this.pdfjsLib) return;
       const container = this.$refs.documentContainer;
@@ -148,26 +300,18 @@ export default {
       ctx.fillRect(150, 200, 120, 50);
     },
     toggleAssistant() {
-      this.assistantVisible = !this.assistantVisible;
+      this.$emit('show-assistant'); // Используем emit вместо $parent
     },
-   
-    async extractPdfText() {
-      if (!this.documentUrl || !this.pdfjsLib) return;
-      const loadingTask = this.pdfjsLib.getDocument(this.documentUrl);
-      const pdf = await loadingTask.promise;
-      let fullText = '';
-      
-      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-        const page = await pdf.getPage(pageNumber);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map(item => item.str).join(' ');
-        console.log(`Страница ${pageNumber}: ${pageText}`);
-        fullText += pageText + '\n';
-      }
-      console.log('Полное содержимое PDF:', fullText);
-    }
+
   },
   watch: {
+    analysisResult(newVal) {
+    if (newVal && this.waitingForAnalysis) {
+      this.fullSecondBody = this.formatAnalysisText(newVal);
+      this.startSecondSequence();
+      this.waitingForAnalysis = false;
+    }
+  },
     documentUrl(newVal) {
       if (newVal && this.pdfjsLib) {
         this.renderPDF();
@@ -193,6 +337,7 @@ export default {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
 
 .analysis {
   width: 520px;

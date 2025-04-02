@@ -11,16 +11,21 @@
         :processing="processing" 
         @processing-started="handleProcessingStarted" 
         @document-uploaded="handleDocumentUploaded" />
+      <AnalysisResult 
+        v-if="showAnalysis" 
+        :documentUrl="uploadedDocumentUrl"
+        :documentName="uploadedDocumentName"
+        @analysis-complete="handleAnalysisComplete"
+        @show-assistant="activateAssistant" />
+      
       <AiAssistant 
-        v-if="showAssistant" 
+        v-if="showAssistant"
+        ref="assistantRef"
         :visible="assistantVisible" 
-        @processing-complete="handleProcessingComplete" />
-      <transition name="fade">
-        <AnalysisResult 
-          v-if="showAnalysis" 
-          :documentUrl="uploadedDocumentUrl"
-          :documentName="uploadedDocumentName" />
-      </transition>
+        @close="hideAssistant"
+        @processing-complete="handleProcessingComplete"
+        :analysisResult="analysisData.result"
+        :analysisError="analysisData.error" />
     </div>
   </div>
 </template>
@@ -40,14 +45,33 @@ export default {
       assistantVisible: false,
       showAnalysis: false,
       uploadedDocumentUrl: '',
-      uploadedDocumentName: ''
+      uploadedDocumentName: '',
+      analysisData: {
+        result: null,
+        error: false
+      }
     }
   },
   methods: {
+    handleAnalysisComplete(data) {
+      this.analysisData = data;
+      if (this.showAssistant) {
+        this.assistantVisible = true;
+      }
+    },
+
+    activateAssistant() {
+      this.showAssistant = true;
+      this.$nextTick(() => {
+        this.assistantVisible = true;
+      });
+    },
+
+
     handleProcessingStarted() {
       this.processing = true;
       setTimeout(() => {
-        this.showAssistant = true;
+        this.activateAssistant();
         this.assistantVisible = false; 
         this.$nextTick(() => {
           setTimeout(() => {
@@ -65,6 +89,10 @@ export default {
     handleDocumentUploaded(file) {
       this.uploadedDocumentUrl = URL.createObjectURL(file);
       this.uploadedDocumentName = file.name;
+    },
+
+    hideAssistant() {
+      this.assistantVisible = false;
     }
   }
 }

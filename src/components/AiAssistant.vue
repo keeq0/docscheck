@@ -77,7 +77,9 @@ export default {
     visible: {
       type: Boolean,
       default: false
-    }
+    },
+    analysisResult: String,
+    analysisError: Boolean
   },
   data() {
     return {
@@ -91,41 +93,38 @@ export default {
       firstTypingInterval: null,
       showSecondLoading: true,
       fullSecondHeader: "Анализ ваших документов успешно завершен.",
-      fullSecondBody:
-        "Ниже представлен подробный отчёт и анализ ваших документов:<br/><br/><strong>1. Общая информация</strong><br/>" +
-        "Название документа: <strong>Договор_аренды</strong><br/>" +
-        "Формат: <strong>PDF</strong><br/>" +
-        "Количество страниц: <strong>12</strong><br/>" +
-        "Дата анализа: <strong>18 марта 2025 г.</strong><br/><br/>" +
-        "<strong>2. Ключевые замечания</strong><br/>" +
-        "<strong>Красные метки (Критические ошибки):</strong><br/>" +
-        "Страница 3: Отсутствует раздел о конфиденциальности — риск утечки данных.<br/>" +
-        "Страница 7: Неверно указаны сроки исполнения обязательств — существенное несоответствие законодательным требованиям.<br/><br/>" +
-        "<strong>Жёлтые метки (Сомнительные моменты):</strong><br/>" +
-        "Страница 5: Формулировка о гарантии...<br/><br/>" +
-        "<strong>3. Дополнительная информация</strong><br/>" +
-        "Документ содержит несколько разделов, каждый из которых требует отдельного внимания. " +
-        "В разделе 1 подробно описаны условия аренды, сроки и порядок оплаты, что является критически важным для успешного исполнения договора. " +
-        "В разделе 2 указаны потенциальные риски, связанные с изменениями законодательства и колебаниями рыночных условий. " +
-        "Также отмечены вопросы, требующие доработки: пересмотр условий, уточнение ответственности сторон и корректировка сроков.<br/><br/>" +
-        "<strong>4. Рекомендации</strong><br/>" +
-        "Рекомендуется провести детальный аудит документа, включающий анализ юридических и финансовых аспектов. " +
-        "При необходимости привлечь внешних экспертов для оценки рисков и выработки корректирующих мер. " +
-        "Также стоит обратить внимание на обновление условий договора с учётом актуальных нормативных требований.",
+      fullSecondBody: this.analysisError 
+        ? "Анализ недоступен" 
+        : this.analysisResult || "Идет анализ документа...",
       typedSecondHeader: "",
       typedSecondBody: "",
       secondTypingIndex: 0,
       secondTypingInterval: null,
       headerTypingSpeed: 50,
-      bodyTypingSpeed: 8,
+      bodyTypingSpeed: 5,
       allMessagesComplete: false,
-      showScrollToBottom: false
+      showScrollToBottom: false,
+      waitingForAnalysis: false,
     }
   },
   watch: {
     visible(newVal) {
       this.internalVisible = newVal;
-    }
+    },
+    analysisResult(newVal) {
+      if (newVal && this.waitingForAnalysis) {
+        this.fullSecondBody = newVal;
+        this.startSecondSequence();
+        this.waitingForAnalysis = false;
+      }
+    },
+    analysisError(newVal) {
+      if (newVal && this.waitingForAnalysis) {
+        this.fullSecondBody = "Анализ недоступен";
+        this.startSecondSequence();
+        this.waitingForAnalysis = false;
+      }
+    },
   },
   mounted() {
    
@@ -148,9 +147,9 @@ export default {
   },
   methods: {
     hideAssistant() {
-      this.internalVisible = false;
-      this.$emit('close');
-    },
+    this.internalVisible = false;
+    this.$emit('close');
+  },
 
     
     startFirstTyping() {
@@ -163,20 +162,67 @@ export default {
         if (this.firstTypingIndex >= text.length) {
           clearInterval(this.firstTypingInterval);
           this.firstMessageComplete = true;
-          setTimeout(() => {
-            this.startSecondSequence();
-          }, 1000);
+          this.waitForAnalysis();
         }
       }, 12);
     },
 
+    waitForAnalysis() {
+      this.waitingForAnalysis = true;
+      this.showSecondLoading = true;
+      // Проверяем, если ответ уже пришел до завершения первой анимации
+      if (this.analysisResult || this.analysisError) {
+        this.startSecondSequence();
+        this.waitingForAnalysis = false;
+      }
+    },
+
+    formatAnalysisText(text) {
+  if (!text) return '';
+  
+  // Удаляем все markdown-символы
+  let cleanText = text
+    .replace(/^#+\s*/gm, '') // Удаляем решетки в начале строк
+    .replace(/\*\*/g, '') // Удаляем ** для жирного текста
+    .replace(/\*/g, '') // Удаляем * для курсива
+    .replace(/^\d+\.\d+\.?\s*/gm, '') // Удаляем нумерацию типа 1.1.
+    .replace(/^-\s*/gm, '') // Удаляем маркеры списков
+    .replace(/\n{3,}/g, '\n\n'); // Удаляем лишние переносы строк
+
+  // Разбиваем на строки и добавляем отступы
+  const lines = cleanText.split('\n');
+  let htmlOutput = '';
+
+  lines.forEach((line, index) => {
+    line = line.trim();
+    
+    if (!line) {
+      // Добавляем отступ между абзацами
+      if (index > 0 && index < lines.length - 1 && lines[index - 1].trim() && lines[index + 1].trim()) {
+        htmlOutput += '<div class="text-block"><br></div>';
+      }
+      return;
+    }
+
+    // Определяем уровень заголовка по отступам
+    if (line.match(/^[A-ZА-ЯЁ][A-ZА-ЯЁa-zа-яё\s-]+$/)) {
+      // Заголовок верхнего уровня (только заглавные буквы и дефисы)
+      htmlOutput += `<h3 class="section-title">${line}</h3>`;
+    } else if (line.match(/^\s{4}/)) {
+      // Подпункт с отступом
+      htmlOutput += `<p class="indented-text">${line.trim()}</p>`;
+    } else {
+      // Обычный текст
+      htmlOutput += `<p class="regular-text">${line}</p>`;
+    }
+  });
+
+  return htmlOutput;
+},
    
     startSecondSequence() {
-      this.showSecondLoading = true;
-      setTimeout(() => {
-        this.showSecondLoading = false;
-        this.startSecondTypingHeader();
-      }, 5000);
+      this.showSecondLoading = false;
+      this.startSecondTypingHeader();
     },
 
     
@@ -196,19 +242,19 @@ export default {
 
   
     startSecondTypingBody() {
-      this.typedSecondBody = "";
-      this.secondTypingIndex = 0;
-      const bodyText = this.fullSecondBody;
-      this.secondTypingInterval = setInterval(() => {
-        this.typedSecondBody += bodyText[this.secondTypingIndex];
-        this.secondTypingIndex++;
-        if (this.secondTypingIndex >= bodyText.length) {
-          clearInterval(this.secondTypingInterval);
-          this.allMessagesComplete = true;
-          this.$emit('processing-complete');
-        }
-      }, this.bodyTypingSpeed);
-    },
+    this.typedSecondBody = "";
+    const bodyText = this.formatAnalysisText(this.fullSecondBody);
+    this.secondTypingIndex = 0;
+    this.secondTypingInterval = setInterval(() => {
+      this.typedSecondBody = bodyText.substring(0, this.secondTypingIndex);
+      this.secondTypingIndex++;
+      if (this.secondTypingIndex >= bodyText.length) {
+        clearInterval(this.secondTypingInterval);
+        this.allMessagesComplete = true;
+        this.$emit('processing-complete');
+      }
+    }, this.bodyTypingSpeed);
+  },
 
    
     handleScroll() {
@@ -232,6 +278,37 @@ export default {
 </script>
 
 <style scoped>
+.analysis-result {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+  color: #333;
+  padding: 15px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 25px 0 15px 0;
+  color: #2c3e50;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.regular-text {
+  font-size: 14px;
+  margin: 10px 0;
+  text-align: left;
+}
+
+.indented-text {
+  font-size: 14px;
+  margin: 8px 0 8px 20px;
+  text-align: left;
+}
+
+.text-block {
+  margin-bottom: 15px;
+}
 .assistant {
   position: fixed;
   top: 0;
