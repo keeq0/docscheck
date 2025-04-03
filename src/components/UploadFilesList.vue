@@ -86,7 +86,6 @@ export default {
   border-radius: 20px;
   padding: 10px 15px;
   z-index: 1000;
-  top: 305px;
   animation: fadeIn 0.15s ease-in-out;
 }
 

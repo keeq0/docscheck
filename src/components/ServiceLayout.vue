@@ -21,7 +21,6 @@
     display: flex;
     width: 1200px;
     padding-top: 50px;
-    display: flex;
     gap: 50px;
   }
   </style>

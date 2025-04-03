@@ -1,71 +1,106 @@
 <template>
-  <div class="upload-documents">
-    <p class="upload-documents__description">
-      Убедитесь, что ваши документы находятся в поддерживаемых форматах (<strong class="upload-documents__format">PDF</strong>, <strong class="upload-documents__format">DOC</strong>, <strong class="upload-documents__format">DOCX</strong>). 
-      Перетащите выбранные файлы в область ниже или кликните на неё, чтобы открыть стандартное окно выбора. 
-      Вы можете загрузить один или несколько файлов.
-    </p>
-
-    <div class="upload-documents__dropmenu">
-      <button class="upload-documents__button" @click="toggleFileList">
-        Мои документы
-      </button>
-      
-      <div class="files-wrapper" ref="filesWrapper" v-show="showFileList">
-        <UploadFilesList />
-      </div>
-      
-      <DropMenu @files-added="onFilesAdded" />
-      <p class="upload-documents__warning">
-        Каждый загруженный файл считается отдельной проверкой!
-      </p>
-    </div>
-
-    <h3 class="upload-documents__title">Загруженные документы:</h3>
-    <div v-if="files.length === 0" class="upload-documents__empty">
-      Загрузите файлы в поле выше для просмотра
-    </div>
-    <ul v-else class="upload-documents__file-list">
-      <li v-for="(file, index) in files" :key="index" class="upload-documents__file-item">
-        <div class="upload-documents__file-info">
-          <img :src="getFileIcon(file)" alt="" class="upload-documents__file-icon" />
-          <span class="upload-documents__file-name">{{ truncateFileName(file.name) }}</span>
-        </div>
-        <div class="upload-documents__file-details">
-          <span class="upload-documents__file-size">{{ formatFileSize(file.size) }}</span>
-          <img 
-            src="@/assets/trash.svg" 
-            alt="Удалить" 
-            class="upload-documents__file-delete" 
-            @click="removeFile(index)" 
-          />
-        </div>
-      </li>
-
-      <button class="upload__start" 
-              :disabled="!agreed || processing || availableFiles === 0" 
-              @click="startProcessing">
-        <template v-if="!processing && availableFiles > 0">
-          <p>Запустить проверку и анализ</p>
-          <div class="upload__price">
-            <p>({{ availableFiles }} <img class="price" src="@/assets/balance.svg" alt=""/>)</p>
-          </div>
-        </template>
-        <template v-else-if="!processing && availableFiles === 0">
-          <p>Добавьте файлы для продолжения</p>
-        </template>
-        <template v-else>
-          <img class="upload__gear" src="@/assets/gear.png" alt="Processing" />
-        </template>
-      </button>
-
-      <div class="agreement">
-        <input type="checkbox" class="agreement__checkbox" v-model="agreed" />
-        <p class="agreement__text">
-          Я даю согласие на сбор, хранение и обработку <a href="#" class="blue agreement__link">персональных данных</a>, содержащихся в загружаемых мной файлах.
+  <div class="upload-documents-wrapper">
+    <transition name="slide-left">
+      <div v-if="!collapsed" class="upload-documents">
+        <p class="upload-documents__description">
+          Убедитесь, что ваши документы находятся в поддерживаемых форматах (<strong class="upload-documents__format">PDF</strong>, <strong class="upload-documents__format">DOC</strong>, <strong class="upload-documents__format">DOCX</strong>). 
+          Перетащите выбранные файлы в область ниже или кликните на неё, чтобы открыть стандартное окно выбора. 
+          Вы можете загрузить один или несколько файлов.
         </p>
+
+        <div class="upload-documents__dropmenu">
+          <button class="upload-documents__button" @click="toggleFileList">
+            Мои документы
+          </button>
+          
+          <div class="files-wrapper" ref="filesWrapper" v-show="showFileList">
+            <UploadFilesList />
+          </div>
+          
+          <DropMenu @files-added="onFilesAdded" />
+          <p class="upload-documents__warning">
+            Каждый загруженный файл считается отдельной проверкой!
+          </p>
+        </div>
+
+        <h3 class="upload-documents__title">Загруженные документы:</h3>
+        <div v-if="files.length === 0" class="upload-documents__empty">
+          Загрузите файлы в поле выше для просмотра
+        </div>
+        <ul v-else class="upload-documents__file-list">
+          <li v-for="(file, index) in files" :key="index" class="upload-documents__file-item">
+            <div class="upload-documents__file-info">
+              <img :src="getFileIcon(file)" alt="" class="upload-documents__file-icon" />
+              <span class="upload-documents__file-name">{{ truncateFileName(file.name) }}</span>
+            </div>
+            <div class="upload-documents__file-details">
+              <span class="upload-documents__file-size">{{ formatFileSize(file.size) }}</span>
+              <img 
+                src="@/assets/trash.svg" 
+                alt="Удалить" 
+                class="upload-documents__file-delete" 
+                @click="removeFile(index)" 
+              />
+            </div>
+          </li>
+
+          <button class="upload__start" 
+                  :disabled="!agreed || processing || availableFiles === 0" 
+                  @click="startProcessing">
+            <template v-if="!processing && availableFiles > 0">
+              <p>Запустить проверку и анализ</p>
+              <div class="upload__price">
+                <p>({{ availableFiles }} <img class="price" src="@/assets/balance.svg" alt=""/>)</p>
+              </div>
+            </template>
+            <template v-else-if="!processing && availableFiles === 0">
+              <p>Добавьте файлы для продолжения</p>
+            </template>
+            <template v-else>
+              <img class="upload__gear" src="@/assets/gear.png" alt="Processing" />
+            </template>
+          </button>
+
+          <div class="agreement">
+            <input type="checkbox" class="agreement__checkbox" v-model="agreed" />
+            <p class="agreement__text">
+              Я даю согласие на сбор, хранение и обработку <a href="#" class="blue agreement__link">персональных данных</a>, содержащихся в загружаемых мной файлах.
+            </p>
+          </div>
+        </ul>
       </div>
-    </ul>
+    </transition>
+
+     
+    <div class="small-menu" :class="{ 'hidden': !collapsed }">
+      <div class="small-menu__files">
+        <!-- Кнопка открытия меню - всегда первая -->
+        <button 
+    class="small-menu__open-btn"
+    @click="handleMenuToggle">
+    <img src="@/assets/upload_folder.svg" class="small-menu__folder-icon" />
+  </button>
+        
+        <!-- Загруженные файлы (без кнопки удаления) -->
+        <div 
+          v-for="(file, index) in files" 
+          :key="index" 
+          class="small-menu__file">
+          <img :src="getFileIcon(file)" class="small-menu__file-icon" />
+        </div>
+      </div>
+      
+      <button 
+        class="small-menu__start" 
+        :disabled="!agreed || processing || availableFiles === 0" 
+        @click="startProcessing"
+        :class="{ 'processing': processing }">
+        <img src="@/assets/play.png" class="start__icon" v-if="!processing"/>
+        <template v-else>
+          <img class="small-menu__gear" src="@/assets/gear.png" alt="Processing" />
+        </template>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -80,6 +115,14 @@ export default {
     UploadFilesList 
   },
   props: {
+    collapsed: {
+      type: Boolean,
+      default: false
+    },
+    visible: {
+      type: Boolean,
+      default: true,
+    },
     processing: {
       type: Boolean,
       default: false
@@ -102,6 +145,13 @@ export default {
     }
   },
   methods: {
+    handleMenuToggle() {
+    this.$emit('toggle-menu');
+    // Ждем завершения анимации раскрытия (200ms)
+    setTimeout(() => {
+      this.$emit('update-pdf');
+    }, 200);
+  },
     toggleFileList() {
       const wrapper = this.$refs.filesWrapper;
       if (this.showFileList) {
@@ -167,11 +217,31 @@ export default {
 </script>
 
 <style scoped>
+.upload-documents-wrapper {
+  width: 450px; /* Фиксированная ширина */
+  position: relative;
+}
+
+.start__icon {
+  width: 20px;
+  height: 20px;
+}
+
 .upload-documents {
   width: 450px;
-  overflow: hidden;
-  font-family: sans-serif;
-  background-color: #FFF;
+  transition: all 0.3 ease;
+}
+
+.upload-documents.collapsed {
+  width: 55px;
+  opacity: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+.upload-documents.collapsed * {
+  display: none;
 }
 
 .upload-documents__description {
@@ -190,7 +260,7 @@ export default {
   background-color: #fff;
   border: none;
   outline: none;
-  box-shadow: 0 2px 3px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e6e6e6;
   font-size: 10px;
   font-weight: 600;
   border-radius: 5px;
@@ -298,7 +368,7 @@ export default {
 .upload__gear {
   width: 24px;
   height: 24px;
-  animation: spin 8s linear infinite;
+  animation: spin 5s linear infinite;
 }
 @keyframes spin {
   from { transform: rotate(0deg); }
@@ -333,5 +403,123 @@ export default {
 }
 .fade-out {
   opacity: 0;
+}
+.small-menu {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 55px;
+  height: fit-content;
+  background: #FFF;
+  border: 1px solid #e6e6e6;
+  border-radius: 30px;
+
+  padding: 15px 0 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  position: absolute;
+  left: 0;
+  transition: all 0.3s ease;
+  margin-right: 20px;
+}
+
+.small-menu.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.small-menu__files {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 140px;
+  width: 100%;
+  padding: 0 5px;
+  padding-bottom: 20px;
+}
+
+
+.small-menu__file-icon {
+  width: 26px;
+  height: 26px;
+  transition: transform 0.2s;
+}
+.small-menu__file {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.small-menu__start {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: #6c67fd;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 2px 5px rgba(108, 103, 253, 0.3);
+}
+
+.small-menu__start:disabled {
+  background: #BBB9FF;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.small-menu__start:not(:disabled):hover {
+  background: #5a55e0;
+}
+
+/* Анимация для основного контента */
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-left-enter-from,
+.slide-left-leave-to {
+  transform: translateX(-20px);
+  opacity: 0;
+}
+
+.small-menu__open-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #6c67fd;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-bottom: 25px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 5px rgba(108, 103, 253, 0.3);
+}
+
+.small-menu__open-btn:hover {
+  background: #5a55e0;
+}
+
+.small-menu__folder-icon {
+  width: 22px;
+  height: 22px;
+  filter: brightness(0) invert(1);
+}
+
+.small-menu__gear {
+  width: 23px;
+  height: 23px;
+  animation: spin 5s linear infinite;
 }
 </style>

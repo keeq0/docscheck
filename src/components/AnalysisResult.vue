@@ -242,13 +242,15 @@ export default {
 
     async renderPDF() {
       if (!this.documentUrl || !this.pdfjsLib) return;
+
       const container = this.$refs.documentContainer;
-      const containerWidth = container.clientWidth;
       container.innerHTML = '';
       
       const loadingTask = this.pdfjsLib.getDocument(this.documentUrl);
       const pdf = await loadingTask.promise;
       this.totalPages = pdf.numPages;
+
+      const containerWidth = container.clientWidth * 1;
       
       for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
         const page = await pdf.getPage(pageNumber);
@@ -302,6 +304,11 @@ export default {
     toggleAssistant() {
       this.$emit('show-assistant'); 
     },
+    updatePdfSize() {
+    if (this.documentUrl) {
+      this.renderPDF();
+    }
+  },
 
   },
   watch: {
@@ -340,15 +347,21 @@ export default {
 
 
 .analysis {
-  width: 520px;
-  height: 580px;
+  width: 88%;
+  height: 100%;
   background-color: #FFF;
   border-radius: 30px;
   border: 1px solid #E6E6E6;
   padding: 15px;
-  position: relative;
-  z-index: 0;
-  animation: fadeInEffect 0.5s ease;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+
+
+
+.expanded .analysis {
+  width: 900px;
 }
 .analysis__header {
   display: flex;
@@ -366,20 +379,22 @@ export default {
   gap: 10px;
 }
 .content__document {
-  width: 390px;
+  width: 100%;
   height: 500px;
-  background-color: #f0f0f0;
-  overflow-y: auto;
-  position: relative;
-  padding: 0;
+  overflow: scroll;
 }
+
+.expanded .content__document {
+  width: 780px; /* 900px - padding и т.д. */
+}
+
 .pdf-page-container {
   margin-bottom: 10px;
-  position: relative;
 }
 .pdf-page {
-  display: block;
   width: 100%;
+  max-width: 100%;
+  transition: all 0.3s ease;
 }
 .overlay-canvas {
   position: absolute;
@@ -389,7 +404,7 @@ export default {
   background: transparent;
 }
 .content__panel {
-  width: 110px;
+  width: 130px;
 }
 .panel__levels {
   list-style: none;

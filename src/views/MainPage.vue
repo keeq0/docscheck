@@ -2,21 +2,34 @@
   <div class="main-page">
     <div class="main-page__header">
       <h1 class="main-page__title">Загрузка документов</h1>
-      <button class="main-page__hide">
+      <button 
+        class="main-page__hide" 
+        @click="toggleUploadDocuments"
+        :disabled="uploadDocumentsCollapsed"
+        :class="{ 'disabled': uploadDocumentsCollapsed }">
         Скрыть меню
       </button>
     </div>
     <div class="main-page__content">
-      <UploadDocuments 
-        :processing="processing" 
-        @processing-started="handleProcessingStarted" 
-        @document-uploaded="handleDocumentUploaded" />
-      <AnalysisResult 
-        v-if="showAnalysis" 
-        :documentUrl="uploadedDocumentUrl"
-        :documentName="uploadedDocumentName"
-        @analysis-complete="handleAnalysisComplete"
-        @show-assistant="activateAssistant" />
+      <div class="upload-documents-container" :class="{ 'collapsed': uploadDocumentsCollapsed }">
+        <UploadDocuments 
+         @update-pdf="handlePdfUpdate"
+          :collapsed="uploadDocumentsCollapsed"
+          @toggle-menu="uploadDocumentsCollapsed = false"
+          :processing="processing" 
+          @processing-started="handleProcessingStarted" 
+          @document-uploaded="handleDocumentUploaded" />
+      </div>
+      <div class="analysis-container" :class="{ 'expanded': uploadDocumentsCollapsed }">
+          <AnalysisResult 
+            v-if="showAnalysis" 
+             ref="analysisResult"
+            :expanded="uploadDocumentsCollapsed"
+            :documentUrl="uploadedDocumentUrl"
+            :documentName="uploadedDocumentName"
+            @analysis-complete="handleAnalysisComplete"
+            @show-assistant="activateAssistant" />
+        </div>
       
       <AiAssistant 
         v-if="showAssistant"
@@ -40,6 +53,8 @@ export default {
   components: { AiAssistant, AnalysisResult, UploadDocuments },
   data() {
     return {
+      uploadDocumentsCollapsed: false,
+      showUploadDocuments: true,
       processing: false,
       showAssistant: false,
       assistantVisible: false,
@@ -53,6 +68,22 @@ export default {
     }
   },
   methods: {
+    handlePdfUpdate() {
+    this.$nextTick(() => {
+      if (this.$refs.analysisResult) {
+        this.$refs.analysisResult.updatePdfSize();
+      }
+    });
+  },
+  toggleUploadDocuments() {
+    this.uploadDocumentsCollapsed = !this.uploadDocumentsCollapsed;
+    // Ждем завершения анимации (200ms)
+    setTimeout(() => {
+      if (this.$refs.analysisResult) {
+        this.$refs.analysisResult.updatePdfSize();
+      }
+    }, 200);
+  },
     handleAnalysisComplete(data) {
       this.analysisData = data;
       if (this.showAssistant) {
@@ -99,18 +130,71 @@ export default {
 </script>
 
 <style scoped>
+
+
+.upload-documents-container {
+  width: 450px;
+  transition: width 0.3s ease;
+  overflow: hidden; /* Скрываем содержимое при сжатии */
+}
+
+.upload-documents-container.collapsed {
+  width: 70px;
+  
+}
+
+/* Анимация для плавного скрытия */
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: all 0.5s ease;
+}
+
+.slide-left-enter-from,
+.slide-left-leave-to {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
 .main-page__title {
   font-size: 28px;
 }
 .main-page__content {
   display: flex;
-  gap: 20px;
+  position: relative;
+  height: 580px; /* Фиксированная высота контейнера */
 }
+
+.analysis-container {
+  position: absolute;
+  left: 470px; /* 450px + 20px gap */
+  width: 620px;
+  transition: all 0.3s ease;
+}
+
+.analysis-container.expanded {
+  left: 75px; /* 55px + 20px gap */
+  width: calc(100% - 95px); /* 55px + 20px*2 gap */
+  max-width: 900px;
+}
+
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.5s;
 }
 .fade-enter, .fade-leave-to {
   opacity: 0;
+}
+
+.analysis-result-wrapper {
+  flex: 1;
+  min-width: 520px;
+  transition: all 0.3s ease;
+}
+
+
+
+.analysis-result-wrapper.expanded {
+  width: calc(100% - 75px); 
+  max-width: none;
 }
 
 .main-page__header {
@@ -122,7 +206,7 @@ export default {
 
 .main-page__hide {
   width: fit-content;
-  height: 20px;
+  height: 25px;
   background: #fff;
   border: none;
   outline: none;
@@ -135,7 +219,13 @@ export default {
   padding: 0 10px;
 }
 
-.main-page__hide:hover {
-  background-color: #fdfdfd;
+.main-page__hide:hover:not(.disabled) {
+  background-color: #f7f7f7;
+}
+
+.main-page__hide.disabled {
+  color: #e6e6e6;
+  cursor: not-allowed;
+  border-color: #e6e6e6;
 }
 </style>
