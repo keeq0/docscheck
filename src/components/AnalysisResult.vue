@@ -5,10 +5,21 @@
       <p class="header__file">{{ truncatedDocumentName }} ({{ totalPages }} стр.)</p>
     </div>
     <div class="analysis__content">
+
       <div class="content__document" ref="documentContainer">
-        <!-- PDF-страницы  -->
+      <!-- PDF-страницы будут рендериться здесь -->
+      
+      <!-- Overlay с точками будет поверх PDF -->
+      <div v-if="resizing" class="pdf-loading-overlay">
+        <div class="pdf-loading-dots">
+          <div class="pdf-loading-dot"></div>
+          <div class="pdf-loading-dot"></div>
+          <div class="pdf-loading-dot"></div>
+        </div>
       </div>
-      <div class="content__panel">
+    </div>
+
+    <div class="content__panel" :class="{ 'expanded': expanded }">
         <ul class="panel__levels">
           <li class="levels__item">
             <div class="item__color green"></div>
@@ -63,6 +74,10 @@ export default {
     documentName: {
       type: String,
       default: 'Документ'
+    },
+    expanded: {
+      type: Boolean,
+      default: false,
     }
   },
   data() {
@@ -74,6 +89,7 @@ export default {
       maxZoom: 3,
       analysisResult: null,
       analysisError: false,
+      resizing: false
     };
   },
   computed: {
@@ -172,7 +188,7 @@ export default {
 - Давать comparative analysis с аналогичными документами
 - Использовать принцип "red flag first"
       Документ для анализа:
-      ${text.substring(0, 10000)}`;
+      ${text.substring(0, 15000)}`;
 
       try {
         console.log('Отправка запроса к Deepseek API...');
@@ -189,9 +205,10 @@ export default {
                 role: "user"
               }
             ],
-            model: "deepseek-chat",
-            max_tokens: 2048,
-            temperature: 0.7
+            model: "deepseek-reasoner",
+            max_tokens: 4096,
+            temperature: 0.4,
+            top_p: 0.9,
           },
           {
             headers: {
@@ -244,7 +261,19 @@ export default {
       if (!this.documentUrl || !this.pdfjsLib) return;
 
       const container = this.$refs.documentContainer;
-      container.innerHTML = '';
+      if (!container) return;
+
+       // Добавляем небольшую задержку перед очисткой
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+        // Очищаем только страницы PDF
+      const pages = container.querySelectorAll('.pdf-page-container');
+      pages.forEach(page => page.remove());
+
+      // Добавляем временный класс для контейнера
+      container.classList.add('pdf-loading');
+
+      try {
       
       const loadingTask = this.pdfjsLib.getDocument(this.documentUrl);
       const pdf = await loadingTask.promise;
@@ -291,6 +320,9 @@ export default {
         pageContainer.appendChild(overlay);
         container.appendChild(pageContainer);
       }
+    } finally {
+      container.classList.remove('pdf-loading');
+    }
     },
     drawHeatmap(viewport, ctx) {
       ctx.clearRect(0, 0, viewport.width, viewport.height);
@@ -304,11 +336,20 @@ export default {
     toggleAssistant() {
       this.$emit('show-assistant'); 
     },
-    updatePdfSize() {
-    if (this.documentUrl) {
-      this.renderPDF();
+
+    async updatePdfSize() {
+      this.resizing = true;
+      try {
+        await this.$nextTick();
+        // Увеличиваем задержку с 50ms до 150ms
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await this.renderPDF();
+      } catch (error) {
+        console.error('Error updating PDF size:', error);
+      } finally {
+        this.resizing = false;
+      }
     }
-  },
 
   },
   watch: {
@@ -405,6 +446,7 @@ export default {
 }
 .content__panel {
   width: 130px;
+  transition: all 0.3s ease;
 }
 .panel__levels {
   list-style: none;
@@ -435,6 +477,7 @@ export default {
 }
 .item__text {
   font-size: 11px;
+  transition: all 0.3s ease;
 }
 .panel__button {
   width: 120px;
@@ -450,6 +493,7 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 5px;
+  transition: all 0.3s ease;
 }
 .ai-assistant {
   background-color: #6C67FD;
@@ -470,6 +514,7 @@ export default {
 .button__icon {
   width: 15px;
   height: 15px;
+  transition: all 0.3s ease;
 }
 .note, .save {
   background-color: #FFF;
@@ -496,5 +541,90 @@ export default {
 .download:hover, .download-all:hover {
   background-color: #fff;
   color: #333;
+}
+
+@keyframes dot-wave {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-10px); }
+}
+
+.pdf-loading-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+}
+
+.pdf-loading-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #6C67FD;
+  animation: dot-wave 1.5s infinite ease-in-out;
+}
+
+.pdf-loading-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+.pdf-loading-dot:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.pdf-loading-dot:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+.content__document {
+  position: relative;
+  min-height: 200px;
+}
+
+.pdf-content {
+  transition: opacity 0.3s ease;
+}
+
+.pdf-loading-dots {
+  display: flex;
+  gap: 10px;
+}
+
+/* Стили для увеличенной панели */
+.expanded .content__panel {
+  width: 160px; /* Увеличиваем ширину */
+}
+
+.expanded .panel__button {
+  width: 150px; /* Ширина кнопок */
+  height: 42px; /* Высота кнопок */
+  font-size: 13px; /* Размер текста */
+  gap: 8px; /* Расстояние между иконкой и текстом */
+}
+
+.expanded .button__icon {
+  width: 18px; /* Размер иконок */
+  height: 18px;
+}
+
+.expanded .panel__levels {
+  gap: 8px; /* Увеличиваем промежутки между элементами */
+}
+
+.expanded .levels__item {
+  gap: 8px;
+}
+
+.expanded .item__color {
+  width: 7px; /* Размер цветных индикаторов */
+  height: 7px;
+}
+
+.expanded .item__text {
+  font-size: 13px; /* Размер текста */
+}
+
+.expanded .download-all {
+  height: 60px; /* Высота большой кнопки */
 }
 </style>

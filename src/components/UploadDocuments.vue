@@ -27,23 +27,24 @@
         <div v-if="files.length === 0" class="upload-documents__empty">
           Загрузите файлы в поле выше для просмотра
         </div>
-        <ul v-else class="upload-documents__file-list">
-          <li v-for="(file, index) in files" :key="index" class="upload-documents__file-item">
-            <div class="upload-documents__file-info">
-              <img :src="getFileIcon(file)" alt="" class="upload-documents__file-icon" />
-              <span class="upload-documents__file-name">{{ truncateFileName(file.name) }}</span>
-            </div>
-            <div class="upload-documents__file-details">
-              <span class="upload-documents__file-size">{{ formatFileSize(file.size) }}</span>
-              <img 
-                src="@/assets/trash.svg" 
-                alt="Удалить" 
-                class="upload-documents__file-delete" 
-                @click="removeFile(index)" 
-              />
-            </div>
-          </li>
-
+        <div v-else class="upload-documents__file-list">
+          <ul class="upload-file-list">
+            <li v-for="(file, index) in files" :key="index" class="upload-documents__file-item">
+              <div class="upload-documents__file-info">
+                <img :src="getFileIcon(file)" alt="" class="upload-documents__file-icon" />
+                <span class="upload-documents__file-name">{{ truncateFileName(file.name) }}</span>
+              </div>
+              <div class="upload-documents__file-details">
+                <span class="upload-documents__file-size">{{ formatFileSize(file.size) }}</span>
+                <img 
+                  src="@/assets/trash.svg" 
+                  alt="Удалить" 
+                  class="upload-documents__file-delete" 
+                  @click="removeFile(index)" 
+                />
+              </div>
+            </li>
+          </ul>
           <button class="upload__start" 
                   :disabled="!agreed || processing || availableFiles === 0" 
                   @click="startProcessing">
@@ -67,7 +68,7 @@
               Я даю согласие на сбор, хранение и обработку <a href="#" class="blue agreement__link">персональных данных</a>, содержащихся в загружаемых мной файлах.
             </p>
           </div>
-        </ul>
+        </div>
       </div>
     </transition>
 
@@ -75,18 +76,46 @@
     <div class="small-menu" :class="{ 'hidden': !collapsed }">
       <div class="small-menu__files">
         <!-- Кнопка открытия меню - всегда первая -->
-        <button 
-    class="small-menu__open-btn"
-    @click="handleMenuToggle">
-    <img src="@/assets/upload_folder.svg" class="small-menu__folder-icon" />
-  </button>
+        <button class="small-menu__open-btn" @click="handleMenuToggle">
+          <img src="@/assets/upload_folder.svg" class="small-menu__folder-icon" />
+        </button>
+
+        <button class="small-menu__add-btn" @click="triggerFileInput">
+          <img src="@/assets/plus.png" class="small-menu__plus-icon" />
+        </button>
+
+        <input 
+          type="file" 
+          ref="fileInput" 
+          @change="handleFileSelect" 
+          multiple 
+          accept=".pdf,.doc,.docx" 
+          style="display: none"
+        />
         
-        <!-- Загруженные файлы (без кнопки удаления) -->
+       
         <div 
           v-for="(file, index) in files" 
           :key="index" 
-          class="small-menu__file">
+          class="small-menu__file"
+          @mouseenter="showTooltip(index)"
+          @mouseleave="hideTooltip">
           <img :src="getFileIcon(file)" class="small-menu__file-icon" />
+          
+          <transition name="fade">
+            <div 
+              v-if="activeTooltip === index" 
+              class="small-menu__tooltip"
+              @mouseenter="keepTooltipVisible"
+              @mouseleave="hideTooltip">
+              <span class="small-menu__tooltip-text">{{ truncateFileName(file.name, 20) }}</span>
+              <img 
+                src="@/assets/trash_white.png" 
+                class="small-menu__tooltip-delete" 
+                @click.stop="removeFile(index)"
+              />
+            </div>
+          </transition>
         </div>
       </div>
       
@@ -133,7 +162,9 @@ export default {
       files: [],
       agreed: false,
       processedCount: 0,
-      showFileList: false 
+      showFileList: false,
+      activeTooltip: null,
+      tooltipTimeout: null
     }
   },
   computed: {
@@ -145,6 +176,36 @@ export default {
     }
   },
   methods: {
+
+      
+  keepTooltipVisible() {
+    // Оставляем тултип видимым при наведении на него
+    clearTimeout(this.tooltipTimeout);
+  },
+
+  showTooltip(index) {
+    clearTimeout(this.tooltipTimeout);
+    this.activeTooltip = index;
+  },
+
+
+  hideTooltip() {
+    // Добавляем небольшую задержку перед скрытием
+    this.tooltipTimeout = setTimeout(() => {
+      this.activeTooltip = null;
+    }, 200);
+  },
+
+  
+    triggerFileInput() {
+    this.$refs.fileInput.click();
+  },
+  handleFileSelect(event) {
+    const selectedFiles = Array.from(event.target.files);
+    this.onFilesAdded(selectedFiles);
+    // Сбрасываем значение input, чтобы можно было выбрать те же файлы снова
+    event.target.value = '';
+  },
     handleMenuToggle() {
     this.$emit('toggle-menu');
     // Ждем завершения анимации раскрытия (200ms)
@@ -201,9 +262,9 @@ export default {
         this.processedCount = this.files.length;
       }
     },
-    truncateFileName(name) {
-      return name.length > 30 ? name.slice(0, 30) + '..' : name;
-    },
+    truncateFileName(name, maxLength = 30) {
+    return name.length > maxLength ? name.slice(0, maxLength) + '..' : name;
+  },
     startProcessing() {
       if (!this.agreed || this.processing || this.availableFiles === 0) return;
       this.$emit('processing-started');
@@ -290,7 +351,12 @@ export default {
 }
 .upload-documents__file-list {
   list-style: none;
-  padding-left: 0;
+}
+
+
+.upload-file-list {
+  max-height: 170px;
+  overflow: scroll;
 }
 .upload-documents__file-item {
   width: 450px;
@@ -345,7 +411,6 @@ export default {
   font-weight: bold;
   gap: 10px;
   cursor: pointer;
-  margin-top: 20px;
   transition: background-color 0.2s, color 0.2s;
 }
 .upload__start:disabled {
@@ -413,14 +478,11 @@ export default {
   background: #FFF;
   border: 1px solid #e6e6e6;
   border-radius: 30px;
-
-  padding: 15px 0 10px;
+  padding: 10px 0 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  position: absolute;
-  left: 0;
   transition: all 0.3s ease;
   margin-right: 20px;
 }
@@ -435,8 +497,7 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  overflow-y: auto;
-  max-height: 140px;
+  height: fit-content;
   width: 100%;
   padding: 0 5px;
   padding-bottom: 20px;
@@ -452,7 +513,58 @@ export default {
   display: flex;
   justify-content: center;
   width: 100%;
+  position: relative;
 }
+
+.small-menu__tooltip {
+  position: absolute;
+  left: calc(100% + 20px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #333;
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000; 
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+  transform: translateY(-50%) translateX(-10px);
+}
+.fade-enter-to, .fade-leave-from {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.small-menu__tooltip-text {
+  font-size: 12px;
+  color: #FFF;
+  flex-grow: 1;
+  text-align: left;
+}
+
+.small-menu__tooltip-delete {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.small-menu__tooltip-delete:hover {
+  opacity: 1;
+}
+
 
 .small-menu__start {
   width: 35px;
@@ -502,9 +614,9 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  margin-bottom: 25px;
+  margin-bottom: 0px;
   transition: all 0.2s;
-  box-shadow: 0 2px 5px rgba(108, 103, 253, 0.3);
+  box-shadow: 0 2px 5px rgba(108, 103, 253, 0.1);
 }
 
 .small-menu__open-btn:hover {
@@ -521,5 +633,28 @@ export default {
   width: 23px;
   height: 23px;
   animation: spin 5s linear infinite;
+}
+
+.small-menu__add-btn {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: #f4f4f4;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-bottom: 15px;
+  transition: all 0.2s;
+}
+
+.small-menu__add-btn:hover {
+  background: #e0e0e0;
+}
+
+.small-menu__plus-icon {
+  width: 9px;
+  height: 9px;
 }
 </style>

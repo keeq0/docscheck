@@ -77,12 +77,11 @@ export default {
   },
   toggleUploadDocuments() {
     this.uploadDocumentsCollapsed = !this.uploadDocumentsCollapsed;
-    // Ждем завершения анимации (200ms)
-    setTimeout(() => {
+    this.$nextTick(() => {
       if (this.$refs.analysisResult) {
         this.$refs.analysisResult.updatePdfSize();
       }
-    }, 200);
+    });
   },
     handleAnalysisComplete(data) {
       this.analysisData = data;
@@ -135,7 +134,6 @@ export default {
 .upload-documents-container {
   width: 450px;
   transition: width 0.3s ease;
-  overflow: hidden; /* Скрываем содержимое при сжатии */
 }
 
 .upload-documents-container.collapsed {
@@ -161,7 +159,7 @@ export default {
 .main-page__content {
   display: flex;
   position: relative;
-  height: 580px; /* Фиксированная высота контейнера */
+  height: 600px
 }
 
 .analysis-container {
