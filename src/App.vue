@@ -1,5 +1,7 @@
 <template>
-  <ServicePage />
+  <div class="app-wrapper">
+    <ServicePage />
+  </div>
 </template>
 
 <script>
@@ -33,4 +35,5 @@ a {
 .blue {
   color: #6C67FD;
 }
+
 </style>
