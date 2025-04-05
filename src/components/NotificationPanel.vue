@@ -121,7 +121,7 @@
     position: absolute;
     top: 130%;
     right: 0;
-    width: 310px;
+    width: 315px;
     background: #fff;
     border-radius: 15px;
     box-shadow: 0 2px 3px 3px rgba(0, 0, 0, 0.02);
