@@ -47,10 +47,12 @@
   .header__subscription {
     display: flex;
     gap: 10px;
+    font-size: 14px;
     color: #a2a2a2;
   }
   .header__plan:hover {
     text-decoration: underline;
+    text-underline-position: under;
     cursor: pointer;
   }
   .header__balance {
@@ -60,6 +62,10 @@
   }
   .header__balance-value {
     margin: 0;
+  }
+
+  .strong {
+    font-size: 14px;
   }
   </style>
   
