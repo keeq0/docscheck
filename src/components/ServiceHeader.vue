@@ -84,7 +84,7 @@
   }
   
   .header__logo {
-    height: 24px;
+    height: 22px;
   }
   
   .header__message {

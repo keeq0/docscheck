@@ -17,7 +17,7 @@
   
   <style scoped>
   .header__search {
-    width: 260px;
+    width: 270px;
     height: 40px;
     background-color: #f4f4f4;
     border-radius: 30px;
