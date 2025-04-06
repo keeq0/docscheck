@@ -1,11 +1,23 @@
 <template>
-  <div :class="['assistant', { 'assistant--visible': internalVisible }]">
+
+   
+    <div 
+      :class="['assistant', { 'assistant--visible': internalVisible }]"
+      :style="{ width: currentWidth + 'px' }"
+    >
+    <div 
+      class="assistant__resize-handle"
+      @mousedown="startResize"
+    ></div>
     <div class="assistant__header">
       <div class="assistant__title">
         <h3>ИИ-помощник</h3>
         <h2>Анализ документа(-ов)</h2>
       </div>
-      <button class="assistant__close" @click="hideAssistant">Скрыть</button>
+      <button class="assistant__close" @click="hideAssistant">
+        <p>Скрыть</p>
+        <img src="@/assets/close-assistant.png" class="close__icon" alt="" />
+      </button>
     </div>
   
    
@@ -67,7 +79,7 @@
         Есть вопросы или что-то не устраивает? Мы всегда открыты к вашим отзывам и предложениям — свяжитесь с нами, и мы постараемся решить любые возникшие проблемы.
       </p>
     </footer>
-  </div>
+  </div> 
 </template>
 
 <script>
@@ -101,10 +113,17 @@ export default {
       secondTypingIndex: 0,
       secondTypingInterval: null,
       headerTypingSpeed: 50,
-      bodyTypingSpeed: 5,
+      bodyTypingSpeed: 1,
       allMessagesComplete: false,
       showScrollToBottom: false,
       waitingForAnalysis: false,
+
+      currentWidth: 0,
+      isResizing: false,
+      startX: 0,
+      startWidth: 0,
+      minWidth: 430,
+      maxWidth: 0
     }
   },
   watch: {
@@ -127,6 +146,17 @@ export default {
     },
   },
   mounted() {
+
+    this.updateMaxWidth();
+    window.addEventListener('resize', this.updateMaxWidth);
+
+    this.currentWidth = Math.min(
+      Math.max(
+        window.innerWidth * 0.465,
+        this.minWidth
+      ),
+      this.maxWidth
+    );
    
     setTimeout(() => {
       this.showFirstLoading = false;
@@ -136,6 +166,9 @@ export default {
     this.$nextTick(() => {
       this.handleScroll();
     });
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.updateMaxWidth);
   },
   updated() {
     
@@ -151,6 +184,45 @@ export default {
     this.$emit('close');
   },
 
+  updateMaxWidth() {
+      this.maxWidth = window.innerWidth * 0.79;
+      // Корректируем текущую ширину, если она превышает новый максимум
+      if (this.currentWidth > this.maxWidth) {
+        this.currentWidth = this.maxWidth;
+      }
+    },
+
+  startResize(e) {
+      e.preventDefault();
+      this.isResizing = true;
+      this.startX = e.clientX;
+      this.startWidth = this.currentWidth;
+      document.addEventListener('mousemove', this.handleResize);
+      document.addEventListener('mouseup', this.stopResize);
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+    },
+    handleResize(e) {
+      if (!this.isResizing) return;
+      e.preventDefault();
+      
+      const deltaX = e.clientX - this.startX;
+      let newWidth = this.startWidth - deltaX;
+      
+      // Ограничиваем ширину в заданных пределах
+      newWidth = Math.min(Math.max(newWidth, this.minWidth), this.maxWidth);
+      
+      // Не позволяем выйти за пределы окна
+      const maxPossibleWidth = window.innerWidth - 50; // 50px отступ от края
+      this.currentWidth = Math.min(newWidth, maxPossibleWidth);
+    },
+    stopResize() {
+      this.isResizing = false;
+      document.removeEventListener('mousemove', this.handleResize);
+      document.removeEventListener('mouseup', this.stopResize);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    },
     
     startFirstTyping() {
       const text = this.fullFirstMessage;
@@ -178,46 +250,82 @@ export default {
     },
 
     formatAnalysisText(text) {
-  if (!text) return '';
-  
- 
-  let cleanText = text
-    .replace(/^#+\s*/gm, '') 
-    .replace(/\*\*/g, '') 
-    .replace(/\*/g, '') 
-    .replace(/^\d+\.\d+\.?\s*/gm, '') 
-    .replace(/^-\s*/gm, '')
-    .replace(/\n{3,}/g, '\n\n'); 
-
-
-  const lines = cleanText.split('\n');
-  let htmlOutput = '';
-
-  lines.forEach((line, index) => {
-    line = line.trim();
+    if (!text) return '';
     
-    if (!line) {
-   
-      if (index > 0 && index < lines.length - 1 && lines[index - 1].trim() && lines[index + 1].trim()) {
-        htmlOutput += '<div class="text-block"><br></div>';
-      }
-      return;
+    const lines = text.split('\n');
+    let htmlOutput = '';
+    let inList = false;
+
+    lines.forEach((line, index) => {
+        line = line.trim();
+        
+        // Пропускаем пустые строки (но добавляем <br> между блоками)
+        if (!line) {
+            if (index > 0 && index < lines.length - 1 && lines[index - 1].trim() && lines[index + 1].trim()) {
+                htmlOutput += '<br>';
+            }
+            return;
+        }
+
+        // Определяем уровень заголовка по количеству #
+        const headerMatch = line.match(/^(#+)\s*(.*?)\s*$/);
+        const isListItem = line.match(/^\s*[-•]\s/) || line.match(/^\s*\d+\.\s/);
+        const isIndented = line.match(/^\s{4}/);
+
+        // Обработка жирного текста **текст**
+        const processBold = (text) => text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        if (headerMatch) {
+            const level = headerMatch[1].length;
+            const headerText = processBold(headerMatch[2]);
+
+            if (inList) {
+                htmlOutput += `</ul>`;
+                inList = false;
+            }
+
+            if (level === 3) {
+                htmlOutput += `<h3 style="font-size:24px;font-weight:bold;margin-bottom:15px">${headerText}</h3>`;
+            } 
+            else if (level === 4) {
+                htmlOutput += `<h4 style="margin-bottom:10px">${headerText}</h4>`;
+            }
+            else {
+                htmlOutput += `<h${level}>${headerText}</h${level}>`;
+            }
+        }
+        else if (isListItem) {
+            if (!inList) {
+                htmlOutput += `<div style="margin-top:10px">`;
+                inList = true;
+            }
+            const itemText = processBold(line.replace(/^\s*[-•]\s*/, '').replace(/^\s*\d+\.\s*/, ''));
+            htmlOutput += `<div>${itemText}</div>`;
+        } 
+        else {
+            if (inList) {
+                htmlOutput += `</div>`;
+                inList = false;
+            }
+            
+            const cleanLine = processBold(line
+                .replace(/^#+\s*/, '')
+                .replace(/---/g, '')
+                .replace(/--/g, ''));
+
+            if (isIndented) {
+                htmlOutput += `<p style="padding-left:20px">${cleanLine}</p>`;
+            } else {
+                htmlOutput += `<p>${cleanLine}</p>`;
+            }
+        }
+    });
+
+    if (inList) {
+        htmlOutput += `</div>`;
     }
 
-  
-    if (line.match(/^[A-ZА-ЯЁ][A-ZА-ЯЁa-zа-яё\s-]+$/)) {
-      
-      htmlOutput += `<h3 class="section-title">${line}</h3>`;
-    } else if (line.match(/^\s{4}/)) {
-   
-      htmlOutput += `<p class="indented-text">${line.trim()}</p>`;
-    } else {
-    
-      htmlOutput += `<p class="regular-text">${line}</p>`;
-    }
-  });
-
-  return htmlOutput;
+    return htmlOutput;
 },
    
     startSecondSequence() {
@@ -313,7 +421,6 @@ export default {
   position: fixed;
   top: 0;
   right: 0;
-  width: 46.5%;
   height: 100vh;
   background: #333;
   color: #fff;
@@ -324,12 +431,30 @@ export default {
   will-change: transform;
   z-index: 1000;
 }
+
+
+.assistant__resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+  z-index: 1001;
+  transition: .2s;
+}
+
+.assistant__resize-handle:hover {
+  background: #666666;
+}
+
 .assistant--visible {
   transform: translateX(0);
 }
 .assistant__header {
   display: flex;
   justify-content: space-between;
+  align-items: start;
   padding-bottom: 20px;
 }
 .assistant__title h3 {
@@ -346,9 +471,16 @@ export default {
   border: none;
   outline: none;
   color: #a2a2a2;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: bold;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.close__icon {
+  width: 8px;
 }
 .assistant__close:hover {
   text-decoration: underline;
@@ -421,19 +553,19 @@ export default {
   padding-top: 10px;
 }
 .footer__buttons {
-  width: 535px;
+  width: 370px;
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  height: 60px;
+  height: 50px;
 }
 .footer__button {
-  height: 50px;
+  height: 40px;
   width: fit-content;
   border-radius: 10px;
   outline: none;
   border: none;
-  padding: 0 40px;
+  padding: 0 15px;
   cursor: pointer;
   transition: opacity 0.5s ease;
   opacity: 0;
@@ -446,7 +578,7 @@ export default {
   background-color: #6C67FD;
   border: 1px solid #6C67FD;
   transition: 0.2s;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: bold;
 }
 .full {
@@ -454,7 +586,7 @@ export default {
   background-color: #FFF;
   border: 1px solid #FFF;
   transition: 0.2s;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: bold;
 }
 .report:hover {
