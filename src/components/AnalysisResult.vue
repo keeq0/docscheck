@@ -272,7 +272,7 @@ OUTPUT: Отчет на русском/английском языке (в за�
           {
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': 'Bearer sk-adf1807396484490882cd63ab534d01e'
+              'Authorization': 'Bearer ${process.env.VUE_APP_DEEPSEEK_API_KEY}'
             }
           }
         );
