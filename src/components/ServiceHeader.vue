@@ -6,7 +6,7 @@
         </a>
         <div class="header__message">
           <strong>Добрый день, {{ userName }}!</strong>
-          <p class="header__subtext">Мы рады что Вы здесь</p>
+          <p class="header__subtext">Мы рады, что вы здесь</p>
         </div>
       </div>
   

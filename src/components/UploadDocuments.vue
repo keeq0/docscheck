@@ -353,6 +353,18 @@ export default {
   list-style: none;
 }
 
+.danger {
+  background-color: rgba(255,0,0,0.5);
+  transition: color 0.2s;
+  border-radius: 3px;
+  padding: 0px 5px;
+}
+
+.danger:hover {
+  background-color: rgba(255,0,0,1);
+  cursor: pointer;
+}
+
 
 .upload-file-list {
   max-height: 170px;

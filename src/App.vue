@@ -36,4 +36,7 @@ a {
   color: #6C67FD;
 }
 
+h1 {
+  font-size: 28px;
+}
 </style>
